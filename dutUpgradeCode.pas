@@ -51,7 +51,7 @@ type
 IMPLEMENTATION
 
 USES
-   LightCore.Pascal, LightCore, LightCore.Time;
+   LightCore.Pascal, LightCore, LightCore.Time, LightCore.System;
 
 
 
@@ -92,7 +92,6 @@ var
 
 begin
   Front := '';
-  FFound:= FALSE;
   inherited Execute(FileName);
 
   sWarnings:= SearchResults.Last.FileName+ CRLF+ 'Warnings' + CRLF+ CRLF;
@@ -105,12 +104,12 @@ begin
 
       if LineIsAComment(sCurrLine) then Continue;     // Ignore comments
 
-      FFound:= IsKeyword(sCurrLine, 'except');
+      VAR IsSwallowed:= IsKeyword(sCurrLine, 'except');
 
-      if FFound
-      then FFound:= RelaxedSearch(NextLine, 'end;');
+      if IsSwallowed
+      then IsSwallowed:= RelaxedSearch(NextLine, 'end;');
 
-      if FFound then
+      if IsSwallowed then
        begin
          SearchResults.Last.AddNewPos(iLine, 1, sCurrLine);       // Log the line(s) where the text was found
 
@@ -151,7 +150,7 @@ begin
        end;
     end;
 
-  if FFound and Replace
+  if SearchResults.Last.Found and Replace
   then AddUnitToUses(TextBody, LogUnit);
 
   Finalize; // Increment counters. Save
@@ -180,7 +179,6 @@ CONST
    ImplementingUnit = 'uUtilsFocus';
 begin
   Front := '';
-  FFound:= FALSE;
   inherited Execute(FileName);
 
   for i:= 0 to TextBody.Count-1 do
@@ -203,12 +201,11 @@ begin
 
             // SetFocus() can be found in LightVcl.Common.VclUtils.pas
             TextBody[i]:= Front+ ImplementingUnit+'.SetFocus('+ ExtractObjectName(sLine)+ ');';  // We write something like SetFocus(Edit2);
-            FFound:= TRUE;
           end;
        end;
     end;
 
-  if FFound and Replace
+  if SearchResults.Last.Found and Replace
   then AddUnitToUses(TextBody, ImplementingUnit);
 
   Finalize; // Increment counters. Save
@@ -229,7 +226,6 @@ var
   sLine: string;
   ObjName: string;
 begin
-  FFound := FALSE;
   inherited Execute(FileName);
 
   for i := 0 to TextBody.Count - 1 do
@@ -255,12 +251,11 @@ begin
         sLine := StringReplace(sLine, ObjName + '.Free', 'FreeAndNil(' + ObjName + ')', [rfReplaceAll]);
 
         TextBody[i] := sLine;
-        FFound := TRUE;
       end;
     end;
   end;
 
-  if FFound AND Replace
+  if SearchResults.Last.Found AND Replace
   then AddUnitToUses(TextBody, 'System.SysUtils'); // Ensure FreeAndNil is available
 
   Finalize; // Increment counters. Save

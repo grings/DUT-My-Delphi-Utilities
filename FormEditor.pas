@@ -180,7 +180,11 @@ end;
 
 procedure TfrmEditor.scrollToPos(Pos: Integer);
 begin
-  Assert(Length(GetSelectedSearch.Positions) > 0);
+  { A real bounds check, not an Assert: a file can be listed with zero positions, and scrollToPos(0) then
+    indexes an empty list. Asserts are compiled out in Release, so the Assert only hid the crash in Debug. }
+  if (GetSelectedSearch = NIL)
+  OR (Pos < 0)
+  OR (Pos > GetSelectedSearch.Positions.Count-1) then EXIT;
 
   var CurLine:= GetSelectedSearch.Positions[Pos].LinePos;   // Covert search record position to line number
   scrollToLine(CurLine);
@@ -190,6 +194,15 @@ end;
 
 procedure TfrmEditor.showDetails;
 begin
+  if (GetSelectedSearch = NIL)
+  OR (CurSearchPos < 0)
+  OR (CurSearchPos > GetSelectedSearch.Positions.Count-1) then
+    begin
+      lblDetails.Caption:= '';
+      lblDetails.Hint:= '';
+      EXIT;
+    end;
+
   var Position:= GetSelectedSearch.Positions[CurSearchPos];
   var s:= 'Pos: '+ IntToStr(Position.LinePos)+ ':'+IntToStr(Position.ColumnPos);
   if Position.WarningMsg <> '' then s:= s + ' - '+ Position.Offender+ ' -> '+ Position.WarningMsg;
@@ -210,7 +223,7 @@ begin
   TimerRew.Enabled:= True;
 
   Inc(CurSearchPos);
-  if CurSearchPos > High(GetSelectedSearch.Positions)
+  if CurSearchPos > GetSelectedSearch.Positions.Count-1
   then CurSearchPos:= 0;
 
   // Scroll

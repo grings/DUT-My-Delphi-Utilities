@@ -64,12 +64,11 @@ procedure TfrmClrPick.edtEnterClrChange(Sender: TObject);
 VAR Color: TColor;
 begin
  Caption:= 'Delphi Color Picker';
- TRY
-  Color:= StringToColor(edtEnterClr.Text);
-  ShowColorDetails(Color);
- EXCEPT
-  Caption:= 'Invalid color';
- END;
+ { TryStringToColor instead of StringToColor in a try/except: the user typing a half-finished color is the normal
+   case here, not an exceptional one. Vcl.Graphics.TryStringToColor (Delphi 13, System.UIConsts:523) reports it as FALSE. }
+ if TryStringToColor(edtEnterClr.Text, Color)
+ then ShowColorDetails(Color)
+ else Caption:= 'Invalid color';
 end;
 
 

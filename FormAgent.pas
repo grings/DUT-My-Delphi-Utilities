@@ -439,7 +439,7 @@ end;
 
 procedure TfrmAgentResults.mnuOpenClick(Sender: TObject);
 begin
-  ExecuteShell(GetSelectedSearch.FileName)
+  ExecuteFile(GetSelectedSearch.FileName)
 end;
 
 

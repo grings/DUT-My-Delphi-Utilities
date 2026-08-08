@@ -65,7 +65,6 @@ var
        var iColumn:= PosInsensitive(Offender, aLine);
        if iColumn < 1 then Exit;
 
-       FFound:= True;
        SearchResults.Last.AddNewPos(iLine, iColumn, sLine, 'Win64 incompatible typecast: '+ Offender, ' Use '+ Fix+ ' instead.');
 
        if Replace then
@@ -100,7 +99,7 @@ begin
         if iColumn > 0 then
 
           // But ignore valid typecasts
-		  todo: this should be Pointer(UIntPtr)
+          // ToDo: this should be Pointer(UIntPtr)
           if  (PosInsensitive('Pointer(NativeInt',  sLine) < 1)
           and (PosInsensitive('Pointer(NativeUInt', sLine) < 1)
           then SearchResults.Last.AddNewPos(iLine, iColumn, sLine, 'Chance of invalid pointer typecast: Pointer(', 'Check if the cast is correct.');

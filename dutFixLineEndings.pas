@@ -33,8 +33,6 @@ TYPE
   TAgent_FixLineEndings = class(TBaseAgent)
   private   
     FormSettings: TfrmSettings;
-    FFound  : Boolean;             // I already have:  SearchResults.Last.Found !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   // The searched text was found
-
     FReplaceNbsp: Boolean;    // Corresponds to chkNbsp
   public
     constructor Create(BackupFile: Boolean); override;
@@ -67,7 +65,11 @@ end;
 constructor TAgent_FixLineEndings.Create(BackupFile: Boolean);
 begin
   inherited Create(BackupFile);
-  AppData.CreateForm(TfrmSettings, FormSettings, FALSE, asFull);   //Freed by: TAgent_FindCode.Destroy
+  { Owned by the agent (NIL owner), NOT by AppData/Application. If Application owned it, shutdown could free the
+    form before this agent's destructor runs, and the destructor's FormSettings.Container.Parent would touch freed memory.
+    An 'if Assigned' guard would not help - the reference dangles, it does not become NIL. }
+  FormSettings:= TfrmSettings.Create(NIL, asFull);   // Freed by this agent's destructor
+  FormSettings.LoadForm;
 end;
 
 
@@ -100,10 +102,9 @@ begin
   then sOutput := ReplaceNbsp(sOutput, ' ');     // Replace character #160 (A0) with space
 
   // Save
-  FFound:= sOutput <> TextBody.Text;
-  if FFound then
+  if sOutput <> TextBody.Text then
   begin
-    // The file needs fixing. We report the issue and set FFound
+    // The file needs fixing. We report the issue.
     // NOTE: This agent reports the file as a whole, not specific lines/columns.
     // We use the simpler AddNewPos overload to mark the file as 'found'.
     if Replace
@@ -111,7 +112,7 @@ begin
     else SearchResults.Last.AddNewPos('Bad line endings and/or #160 found.');
 
     // Prepare for saving if replacement is enabled
-    if FFound and Replace
+    if Replace
     then TextBody.Text:= sOutput;
   end;
 

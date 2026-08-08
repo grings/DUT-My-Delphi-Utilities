@@ -95,7 +95,6 @@ begin
 
   // Settings
   AppData.CreateFormHidden(TfrmOptions, frmOptions, asFull);
-  AppData.Initializing:= FALSE;
 
   // Hide main form
   if chkHideMainForm.Checked then Hide;
@@ -114,7 +113,10 @@ begin
           // Loop 2: Check the controls (which should be the TCategoryPanelSurface)
           for j := 0 to Panel.ControlCount - 1 do
           begin
-            Surface := Panel.Controls[j] as TCategoryPanelSurface; // This is confirmed to be TCategoryPanelSurface
+            { A TCategoryPanel can also hold non-surface children (header, expand button), so test before casting.
+              A hard 'as' cast raises EInvalidCast the moment one of those shows up. }
+            if NOT (Panel.Controls[j] is TCategoryPanelSurface) then Continue;
+            Surface := TCategoryPanelSurface(Panel.Controls[j]);
             // Loop 3: Iterate through the controls on the TCategoryPanelSurface
             // We assume the buttons are directly on the surface
             for k := 0 to Surface.ControlCount - 1 do

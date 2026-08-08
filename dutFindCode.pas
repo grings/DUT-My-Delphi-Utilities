@@ -64,7 +64,11 @@ end;
 constructor TAgent_FindCode.Create(BackupFile: Boolean);
 begin
   inherited Create(BackupFile);
-  AppData.CreateForm(TfrmSettingsFindCode, FormSettings, FALSE, asFull);   //Freed by: TAgent_FindCode.Destroy
+  { Owned by the agent (NIL owner), NOT by AppData/Application. If Application owned it, shutdown could free the
+    form before this agent's destructor runs, and the destructor's FormSettings.Container.Parent would touch freed memory.
+    An 'if Assigned' guard would not help - the reference dangles, it does not become NIL. }
+  FormSettings:= TfrmSettingsFindCode.Create(NIL, asFull);   // Freed by this agent's destructor
+  FormSettings.LoadForm;
 end;
 
 

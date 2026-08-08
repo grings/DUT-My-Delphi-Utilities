@@ -114,8 +114,13 @@ begin
       TextBody[i]:= sLine+ Comments;
     end;
 
-   var NewName:= IncrementFileName(SearchResults.Last.FileName, True);
-   StringToFile(NewName, TextBody.Text, woOverwrite, wpAuto);
+   { Only write when the user actually asked for a replace. Without this guard the agent littered the folder
+     with reformatted copies even in search-only mode. }
+   if Replace then
+    begin
+      var NewName:= IncrementFileName(SearchResults.Last.FileName, True);
+      StringToFile(NewName, TextBody.Text, woOverwrite, wpAuto);
+    end;
 
    Finalize;
 end;

@@ -1,38 +1,21 @@
- Code Review � LDU project
+# ToDo — LDU
 
-  Critical
+## Code review findings — ALL 8 FIXED 2026-08-03 (Opus 5)
 
-  1. DoSave reads FFound but Finalize reads SearchResults.Last.Found (dutBase.pas:146 vs :119). Two parallel "found"
-  signals. Future agents that only use SearchResults.Last.AddNewPos won't trigger writes in Replace mode. Source itself
-  flags it (line 31). Fix: drop FFound, use SearchResults.Last.Found.
-  2. TAgent_FixLineEndings shadows base FFound (dutFixLineEndings.pas:36). Local private FFound hides protected base
-  field ? DoSave always sees FALSE ? Replace silently never writes. Fix: delete local field.
-  3. Hard as TCategoryPanelSurface cast (MainForm.pas:117). Crashes if TCategoryPanel ever holds a non-surface child
-  (header/expand button). Fix: is-check then Continue.
+The review that produced this list is done. Kept as a record of what changed and why.
 
-  Significant
+| # | Finding | Fix applied |
+|---|---|---|
+| 1 | `DoSave` read `FFound` while `Finalize` read `SearchResults.Last.Found` — two parallel "found" signals | Deleted `TBaseAgent.FFound`. `SearchResults.Last.Found` is now the only signal. **Worse than reported:** `TAgent_TryExcept` reassigned `FFound` on *every loop iteration*, so after the loop it held the verdict of the LAST line only — in Replace mode the file was written (and `uMyLog` added to the uses) only when the very last line examined happened to be a match. That per-line verdict is now a real local (`IsSwallowed`). |
+| 2 | `TAgent_FixLineEndings` shadowed the base `FFound` -> `DoSave` always saw FALSE -> Replace silently never wrote | Local field deleted; the comparison is inlined in the `if`. |
+| 3 | Hard `as TCategoryPanelSurface` cast (MainForm.pas) | `is`-test + `Continue` before the cast. |
+| 4 | `SaveSettings` bailed when the INI did not exist -> first run lost `LastPath` forever | `FileExists` guard removed from Save (kept on Load). |
+| 5 | Agent destructors touched `FormSettings.Container` after AppData may have freed the form | The three settings forms are now created with a NIL owner, so the agent owns them outright and nothing can free them first. An `if Assigned` guard would NOT have worked — the reference dangles, it never becomes NIL. |
+| 6 | Unbounded `Positions[]` access in FormEditor (`scrollToPos`, `showDetails`) | Real bounds checks replace the `Assert` — asserts are compiled out in Release, so the Assert only hid the crash in Debug. |
+| 7 | `dutCodeFormat.Execute` wrote a new file unconditionally, ignoring `Replace` | Write wrapped in `if Replace`. |
+| 8 | Bare `except` in FormColorPicker swallowed everything | Replaced with `TryStringToColor` — a half-typed color is the normal case here, not an exceptional one. No exception handling needed. |
 
-  4. SaveSettings bails when INI missing (dutBase.pas:191). First-run loses LastPath. Fix: remove the FileExists guard
-  from Save (keep on Load).
-  5. Use-after-free risk in agent destructors re-parenting FormSettings.Container before FreeAndNil
-  (dutFindCode.pas:128, dutFindInterface.pas:82, dutFixLineEndings.pas:137). AppData may have already freed the form.
-  Fix: if Assigned(FormSettings) then ... or own the form locally with Create(nil).
-  6. Unbounded Positions[] access (FormEditor.pas:183, :193). scrollToPos(0) after empty results crashes; showDetails
-  indexes without bounds check.
+## Open
 
-  Minor
-
-  7. dutCodeFormat.Execute writes new file unconditionally (:117) � ignores Replace flag, creates files even in
-  search-only mode.
-  8. Bare except swallowing all (FormColorPicker.pas:70) � violates project rule. Narrow to EConvertError.
-
-  Clean
-
-  dutWin64Api.pas, dutWin64Extended.pas, dutWin64Pointer.pas, dutBom.pas, dutAgentFactory.pas, FormExclude.pas,
-  FormOTA.pas.
-
-  Top fixes
-
-  #2 (silent breakage) ? #1 (latent hazard) ? #3 (crash) ? #4 (data loss).
-
-? Brewed for 3m 27s
+- `dutWin64Pointer.pas:103` — the `Pointer()` typecast scan ignores only `NativeInt`/`NativeUInt`. Per the note in the code it should also accept `Pointer(UIntPtr)`.
+- ` Tool - TextReplace\dutTextReplace.pas` is not wired into any project.

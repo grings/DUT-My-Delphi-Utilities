@@ -123,7 +123,7 @@ var
   function IsIdentChar(c: Char): Boolean;
   begin
     // Unicode-safe identifier check: letters, digits or underscore
-    Result := (c = '_') or TCharacter.IsLetterOrDigit(c);
+    Result := (c = '_') or c.IsLetterOrDigit;   // TCharacter is deprecated in Delphi 13 ('Use TCharHelper')
   end;
 
 begin

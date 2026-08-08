@@ -28,7 +28,9 @@ TYPE
     procedure LoadSettings;
     procedure SaveSettings;
    protected
-    FFound  : Boolean;             // I already have:  SearchResults.Last.Found !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   // The searched text was found
+    { There is no FFound field. SearchResults.Last.Found is the ONE signal that says "this file had a hit".
+      A second flag drifted out of sync with it: DoSave read the flag while Finalize read SearchResults.Last.Found,
+      and agents that reassigned the flag inside their scan loop left it holding the verdict of the LAST line only. }
     FRelaxed: Boolean;             // Uses a relaxed search. More exhaustive but can give more false positives
     TextBody: TStringList;
    public
@@ -143,7 +145,7 @@ end;
 -------------------------------------------------------------------------------------------------------------}
 procedure TBaseAgent.DoSave;
 begin
-  if FFound AND Replace then
+  if SearchResults.Last.Found AND Replace then
     begin
       // Do backup
       if FBackupFile
@@ -189,7 +191,8 @@ end;
 procedure TBaseAgent.SaveSettings;
 var Ini: TIniFileEx;
 begin
-  if not FileExists(AppDataCore.IniFile) then Exit;
+  { No FileExists guard here (Load has one, Save must not): on the very first run the INI does not exist yet,
+    so guarding Save would silently drop LastPath forever. TIniFileEx creates the file. }
   Ini:= TIniFileEx.Create('AGENTS', AppDataCore.IniFile);
   try
     Ini.Write('LastPath', LastPath);
