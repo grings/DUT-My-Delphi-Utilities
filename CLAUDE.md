@@ -14,11 +14,12 @@ LDU (LightSaber Delphi Utilities) — VCL toolset that scans/repairs Delphi PAS/
 
 ## Build System
 
-**Main project**: `LDU.dpr` (project settings in `LDU.dproj`). Project group: `Group.groupproj`.
+**Main project**: `LDU.dpr` (project settings in `LDU.dproj`). Project group: `Group.groupproj` — also builds `IDE Expert\Expert_DUT_Receiver.dproj` and the out-of-tree `c:\Projects\Projects IDE Experts\File From Clipboard\`.
 
-After BIG changes, run `Build.cmd` to compile via MSBuild.
+Compile through the `light-compiler` agent. Never MSBuild directly. (`Build.cmd` was deleted in commit f4c066f — the reference to it here was stale.)
+Build in Debug only. The dproj has just Debug and Release; there is no PreRelease config, and LDU does not ship to users.
+Search paths to LightSaber are absolute (`c:\Projects\LightSaber\FrameVCL\;c:\Projects\LightSaber`), not relative.
 Also check for FastMM leak report files. If a leak file is found, rename it after you fix the leak.
-You will only build in Debug mode.
 
 FastMM4 enabled in DPR (first uses clause). `FastMM_FullDebugMode.dll` shipped in project root.
 
@@ -37,7 +38,9 @@ FastMM4 enabled in DPR (first uses clause). `FastMM_FullDebugMode.dll` shipped i
   `frmSettingsFindCode`, `frmSettingsIntf`, `frmSettings` (FixLineEndings).
 
 ### Key Classes
-- `TBaseAgent` (dutBase.pas) — abstract base. Holds `TextBody: TStringList`, `SearchResults: TSearchResults`, `Needle`, `LastPath`, `CaseSensitive`, `Replace`, `FBackupFile`. Loads/saves `LastPath` to INI in ctor/dtor. `Execute(FileName)` → derived class scans; `Finalize` → `DoSave` (writes back if `Replace` & `FFound`, optional `.bak` backup), updates counters. Capabilities: `CanRelax`/`CanReplace` class functions.
+- `TBaseAgent` (dutBase.pas) — abstract base. Holds `TextBody: TStringList`, `SearchResults: TSearchResults`, `Needle`, `LastPath`, `CaseSensitive`, `Replace`, `FBackupFile`. Loads/saves `LastPath` to INI in ctor/dtor. `Execute(FileName)` → derived class scans; `Finalize` → `DoSave` (writes back if `Replace` and `SearchResults.Last.Found`, optional `.bak` backup), updates counters. Capabilities: `CanRelax`/`CanReplace` class functions.
+  **`SearchResults.Last.Found` is the ONE "this file had a hit" signal** — there is no `FFound` field any more. A second flag used to exist and drifted out of sync with it (fixed 2026-08-03, see ToDo.md #1/#2). Do not reintroduce one: an agent that records a hit must call `SearchResults.Last.AddNewPos`, and nothing else.
+  The three agents with a docked settings form (`FindCode`, `FindInterface`, `FixLineEndings`) create it with a **NIL owner** so the agent owns it. Do not switch them back to `AppData.CreateForm` — Application would then own the form and could free it before the agent destructor runs, which touches `FormSettings.Container`.
 - `TDutAgentFactory` (dutAgentFactory.pas) — `CreateAgent(AgentClass, BackupFile)` and `GetAgentDescription(AgentID)`. `IDToClassName(ID)` maps numeric tag → `TAgentClass`. ID ranges: 1–4 fixers, 10–11 find, 20–23 BOM/format, 50–52 WinAPI, 60–61 pointer, 70–71 Extended.
 - Concrete agents (each in `dut*.pas`):
   - Upgrade: `TAgent_TryExcept`, `TAgent_SetFocus`, `TAgent_FreeAndNil` (dutUpgradeCode.pas), `TAgent_FixLineEndings` (dutFixLineEndings.pas).
