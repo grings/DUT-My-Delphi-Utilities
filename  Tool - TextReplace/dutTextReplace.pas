@@ -22,7 +22,7 @@ IMPLEMENTATION
 
 USES LightCore.SearchResult, LightCore.IO, LightCore.TextFile, LightVcl.Common.IO, LightCore, LightCore.Time, LightCore.Types, LightVcl.Common.SystemTime, LightVcl.Common.Clipboard, LightVcl.Common.Dialogs,
      LightVcl.Graph.Util, LightVcl.Common.WinVersion, LightVcl.Common.WinVersionAPI, LightVcl.Common.ExeVersion, LightVcl.Common.CenterControl, LightCore.WrapString,LightVcl.Internet.HTML, LightVcl.Common.Sound, LightCore.Debugger, LightVcl.Common.Debugger,
-     LightCore.StringList, LightVcl.Internet.Common, LightCore.Internet, LightVcl.Common.Shell, LightVcl.Common.SystemTime, LightVcl.Common.Clipboard,
+     LightCore.StringList, LightVcl.Internet.Common, LightCore.Internet, LightVcl.Common.Shell,
      LightVcl.Visual.AssociateExt, LightVcl.Common.ExecuteShell, LightCore.AppData, LightVcl.Visual.AppData
 ;
 
@@ -42,7 +42,7 @@ end;
 procedure TDUTReplace.ReplaceBetween(CONST TagStart, TagEnd, ReplaceWith: string; EliminateTags: Boolean);
 var
   TextBody: string;
-  FFound: Boolean;x
+  FFound: Boolean;
 
   LastPos: Integer;
 begin
@@ -81,7 +81,7 @@ end;
 procedure TDUTReplace.SearchBetween(CONST TagStart, TagEnd, ReplaceWith: string);
 var
   TextBody: string;
-  FFound: Boolean;x
+  FFound: Boolean;
 
   LastPos: Integer;
 begin
