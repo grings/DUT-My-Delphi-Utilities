@@ -31,6 +31,7 @@ uses
 begin
   AppData:= TAppData.Create('LUD - Light Delphi Utilities');
   AppData.ProductWelcome:= 'https://GabrielMoraru.com';
-  AppData.CreateMainForm(TfrmMain, frmMain, TRUE, TRUE, asFull);
+  Application.MainFormOnTaskbar:= TRUE;
+  AppData.CreateMainForm(TfrmMain, frmMain, asFull);
   AppData.Run;
 end.
