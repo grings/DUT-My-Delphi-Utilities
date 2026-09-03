@@ -12,6 +12,20 @@ LDU (LightSaber Delphi Utilities) — VCL toolset that scans/repairs Delphi PAS/
 - Search: find all classes implementing an interface; arbitrary code search.
 - Misc tools: color picker, options dialog, agent results viewer, optional OTA IDE integration.
 
+### FixEnters.exe — two faces, one worker
+
+`_Modules - Integrated\Fix Enters\FixEnters.dpr` turns every line ending into carriage-return + line-feed and skips binary `.dfm` files (they start with byte $FF; rewriting one as text destroys the form).
+
+Started with no parameters it opens its window. Started with `--console` it opens no window and answers on the console:
+
+```
+FixEnters.exe --console <folder> [--mask "*.pas"] [--no-subfolders] [--fix] [--no-backup] [--nbsp]
+```
+
+**Without `--fix` nothing is written** — it only lists the files that WOULD change. Exit codes: 0 fine · 1 bad command line (the usage text is printed) · 2 could not start, usually a folder that does not exist · 3 finished but at least one file could not be read or written.
+
+Both faces call the same worker, `FixEnters.Engine.pas`, so they cannot drift apart. The console face is `FixEnters.Console.pas`; it borrows the caller's console with `AttachConsole` and writes through the standard output handle, because a window program's `WriteLn` is not connected to anything and raises I/O error 105.
+
 ## Build System
 
 **Main project**: `LDU.dpr` (project settings in `LDU.dproj`). Project group: `Group.groupproj` — also builds `IDE Expert\Expert_DUT_Receiver.dproj` and the out-of-tree `c:\Projects\Projects IDE Experts\File From Clipboard\`.
