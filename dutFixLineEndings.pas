@@ -1,7 +1,7 @@
 ﻿UNIT dutFixLineEndings;
 
 {=============================================================================================================
-   2025.01
+   2026.09.06
    www.GabrielMoraru.com
    Github.com/GabrielOnDelphi/Delphi-LightSaber/blob/main/System/Copyright.txt
 --------------------------------------------------------------------------------------------------------------
@@ -96,8 +96,13 @@ begin
   end;
 
   // Transformation
-  sOutput := ReplaceLonellyLF(sOutput , CRLF);    // 0A #10 LF
-  sOutput := ReplaceLonellyCR(sOutput, CRLF);     // 0D #13 CR
+  { AdjustLineBreaks does the whole job in one pass: a solitary LF becomes CRLF, a solitary CR becomes CRLF,
+    an existing CRLF pair is left alone. It counts first, then fills one pre-sized string.
+    Verified in c:\Delphi\Delphi 13\source\rtl\sys\System.SysUtils.pas, line 8399.
+    It replaces the ReplaceLonellyLF + ReplaceLonellyCR pair, which built the result one character at a time
+    and reallocated the string on every character. Same output, quadratic cost.
+    FixEnters.Engine.pas (the standalone FixEnters.exe) does the same thing the same way - keep them in step. }
+  sOutput := System.SysUtils.AdjustLineBreaks(sOutput, tlbsCRLF);
   if FReplaceNbsp
   then sOutput := ReplaceNbsp(sOutput, ' ');     // Replace character #160 (A0) with space
 
